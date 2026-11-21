@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>息壤 · 股息再投资计算器</title>
+    <meta
+      name="description"
+      content="选择一只股票，设定历史买入时间与定投计划，把每一次分红都变成新的股份，看看时间与复利如何工作。"
+    />
+    <meta name="theme-color" content="#f4efe4" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23a84732'/%3E%3Ctext x='32' y='44' font-size='38' text-anchor='middle' fill='%23f8f2e6' font-family='serif'%3E息%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="息壤首页">
+        <span class="seal">息</span>
+        <span class="brand-text">
+          <strong>息壤</strong>
+          <small>DIVIDEND COMPOUNDER</small>
+        </span>
+      </a>
+      <div class="header-right">
+        <p class="header-tagline">把每一次分红，变成更多股份。</p>
+        <button class="ghost-btn" id="shareBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15 8a3 3 0 1 0-2.9-3.7L7.8 7.1a3 3 0 1 0 0 5.8l4.3 2.8A3 3 0 1 0 13 14l-4.3-2.8a3 3 0 0 0 0-2.4L13 6a3 3 0 0 0 2 2Z" />
+          </svg>
+          分享方案
+        </button>
+      </div>
+    </header>
+
+    <div class="loading-line" id="loadingLine" aria-hidden="true"></div>
+
+    <main class="layout">
+      <aside class="panel config-panel" aria-label="投资参数">
+        <div class="panel-head">
+          <div class="panel-title">
+            <span class="step">01</span>
+            <h2>投资设定</h2>
+          </div>
+          <span class="auto-badge" id="calcState"><i></i>自动测算</span>
+        </div>
+
+        <div class="panel-scroll">
+          <form id="configForm" novalidate>
+            <div class="field">
+              <label class="field-label" for="symbolInput">
+                股票代码
+                <small>A股 / 港股 / 美股</small>
+              </label>
+              <div class="symbol-row">
+                <input
+                  id="symbolInput"
+                  class="input symbol-input"
+                  type="text"
+                  value="601398.SS"
+                  placeholder="601398 / AAPL / 0700.HK"
+                  autocomplete="off"
+                  spellcheck="false"
+                  aria-describedby="symbolHint"
+                />
+                <button class="load-btn" id="loadSymbolBtn" type="button">加载</button>
+              </div>
+              <p class="hint" id="symbolHint">输入代码后回车，或从下方选择一个示例。</p>
+              <div class="presets" id="presetsEl" aria-label="示例股票"></div>
+            </div>
+
+            <div class="stock-card" id="stockCard" aria-live="polite">
+              <div class="stock-main">
+                <span class="stock-icon" id="stockIcon">工</span>
+                <div class="stock-id">
+                  <strong id="stockCardName">工商银行</strong>
+                  <span id="stockCardCode">601398.SS · 上交所</span>
+                </div>
+                <span class="currency-badge" id="stockCurrency">CNY</span>
+              </div>
+              <div class="stock-foot">
+                <span id="stockRange">2006.10.27 — 2026.11.20</span>
+                <span id="stockPrice">最新 9.40</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="startDate">
+                开始日期
+                <small>从这一天开始买入</small>
+              </label>
+              <input id="startDate" class="input" type="date" value="2015-01-05" />
+              <p class="hint" id="dateHint">至今 · 按收盘价成交</p>
+              <button class="date-fix-btn" id="dateFixBtn" type="button" hidden>
+                使用下一交易日 <span id="dateFixText">—</span>
+              </button>
+            </div>
+
+            <div class="field">
+              <span class="field-label">买入方式</span>
+              <div class="segmented" id="freqSegment" role="group" aria-label="买入方式">
+                <button type="button" data-freq="none">一次性</button>
+                <button type="button" data-freq="monthly" class="active">每月定投</button>
+                <button type="button" data-freq="yearly">每年定投</button>
+              </div>
+            </div>
+
+            <div class="amount-grid" id="amountGrid">
+              <div class="field">
+                <label class="field-label" for="initialAmount">
+                  <span id="initialLabel">初始投入</span>
+                  <small id="initialHint">开始日买入</small>
+                </label>
+                <div class="money-input">
+                  <span class="currency-prefix" data-currency>¥</span>
+                  <input
+                    id="initialAmount"
+                    class="input"
+                    type="number"
+                    min="0"
+                    step="1000"
+                    value="50000"
+                    inputmode="decimal"
+                    aria-label="初始投入金额"
+                  />
+                </div>
+              </div>
+
+              <div class="field recurring-field" id="recurringWrap">
+                <label class="field-label" for="recurringAmount">
+                  <span id="recurringLabel">每月定投</span>
+                  <small>同日执行</small>
+                </label>
+                <div class="money-input">
+                  <span class="currency-prefix" data-currency>¥</span>
+                  <input
+                    id="recurringAmount"
+                    class="input"
+                    type="number"
+                    min="0"
+                    step="500"
+                    value="2000"
+                    inputmode="decimal"
+                    aria-label="每期定投金额"
+                  />
+                </div>
+              </div>
+            </div>
+            <p class="hint amount-hint" id="scheduleHint">初始投入在开始日买入；每月同日定投，遇非交易日顺延。</p>
+
+            <div class="toggle-card">
+              <div class="toggle-copy">
+                <strong>分红再投资</strong>
+                <span>除息日按收盘价自动买入</span>
+              </div>
+              <button
+                class="switch on"
+                id="reinvestToggle"
+                type="button"
+                role="switch"
+                aria-checked="true"
+                aria-label="分红再投资"
+              >
+                <span></span>
+              </button>
+            </div>
+
+            <details class="advanced">
+              <summary>
+                <span>高级设定</span>
+                <span class="summary-note">红利税 / 数据</span>
+              </summary>
+              <div class="advanced-body">
+                <div class="field advanced-field" id="schedulePolicyRow">
+                  <label class="field-label" for="schedulePolicy">
+                    定投遇非交易日
+                    <small>自动定投计划</small>
+                  </label>
+                  <select id="schedulePolicy" class="input select-input">
+                    <option value="roll">顺延到下一交易日</option>
+                    <option value="skip">跳过本期</option>
+                  </select>
+                </div>
+
+                <div class="tax-block">
+                  <label class="check-label" id="holdingTaxRow">
+                    <input type="checkbox" id="holdingTax" checked />
+                    <span>按 A 股持有期差别计税</span>
+                  </label>
+                  <p class="tax-tier" id="holdingTaxNote">≤1 个月 20% · 1 个月–1 年 10% · &gt;1 年 0%</p>
+
+                  <div class="tax-row" id="fixedTaxRow">
+                    <span class="tax-label">固定税率</span>
+                    <input
+                      id="taxRate"
+                      class="input tax-input"
+                      type="number"
+                      min="0"
+                      max="50"
+                      step="1"
+                      value="0"
+                      inputmode="decimal"
+                      aria-label="红利税率百分比"
+                    />
+                    <span class="tax-unit">%</span>
+                    <span class="tax-tip" id="taxTip">按每次分红扣除</span>
+                  </div>
+                  <p class="hint" id="taxHint">A 股按除息日持有期估算；实际在卖出时结算。</p>
+                </div>
+
+                <button class="refresh-btn" id="refreshDataBtn" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M20 11a8 8 0 1 0-2.3 6.7M20 5v6h-6" />
+                  </svg>
+                  刷新行情数据
+                </button>
+              </div>
+            </details>
+
+            <p class="form-error" id="formError" role="alert" hidden></p>
+          </form>
+        </div>
+
+        <div class="panel-cta">
+          <button class="calc-btn" id="calcBtn" type="button">
+            <span>开始测算</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </button>
+          <p class="panel-note">历史数据测算，不含佣金与汇率波动。</p>
+        </div>
+      </aside>
+
+      <section class="content" aria-label="测算结果">
+        <div class="result-top">
+          <div class="stock-title">
+            <p class="kicker">HISTORICAL DIVIDEND BACKTEST</p>
+            <h1>
+              <span id="stockName">工商银行</span>
+              <span class="ticker" id="stockTicker">601398.SS</span>
+            </h1>
+            <p class="result-range" id="resultRange">正在准备历史行情…</p>
+          </div>
+          <div class="data-chip" id="dataChip">
+            <span class="status-dot"></span>
+            <span class="data-chip-copy">
+              <b id="dataChipText">数据加载中</b>
+              <small id="dataChipSub">Yahoo Finance · 拆股复权</small>
+            </span>
+          </div>
+        </div>
+
+        <div class="error-banner" id="errorBanner" hidden>
+          <div>
+            <strong>行情加载失败</strong>
+            <p id="errorText"></p>
+          </div>
+          <button id="retryBtn" type="button">重试</button>
+        </div>
+
+        <section class="result-card" id="resultCard" aria-label="期末资产概览">
+          <span class="ring ring-1" aria-hidden="true"></span>
+          <span class="ring ring-2" aria-hidden="true"></span>
+          <span class="ring ring-3" aria-hidden="true"></span>
+
+          <div class="result-inner">
+            <div class="hero-left">
+              <p class="hero-label">
+                <span class="gold-dot"></span>
+                期末账户总资产
+                <span id="asOf">—</span>
+              </p>
+              <div class="hero-value">
+                <span class="hero-currency" id="heroCurrency">¥</span><span id="finalValue">—</span>
+              </div>
+              <div class="hero-sub">
+                <span class="gain-pill" id="gainPill">—</span>
+                <span id="heroProfit">总收益 —</span>
+              </div>
+            </div>
+
+            <div class="hero-grid">
+              <div class="hero-stat">
+                <span>累计投入</span>
+                <b id="totalInvested">—</b>
+              </div>
+              <div class="hero-stat">
+                <span>累计分红</span>
+                <b id="totalDividends">—</b>
+              </div>
+              <div class="hero-stat">
+                <span>年化收益 XIRR</span>
+                <b id="xirrValue">—</b>
+              </div>
+              <div class="hero-stat">
+                <span>期末持股</span>
+                <b id="finalShares">—</b>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-foot">
+            <span id="heroFootLeft">—</span>
+            <span id="heroFootRight">—</span>
+          </div>
+        </section>
+
+        <section class="card growth-card">
+          <div class="card-head">
+            <div>
+              <p class="card-kicker">PORTFOLIO VALUE</p>
+              <h2>资产增长曲线</h2>
+            </div>
+            <div class="legend">
+              <span class="legend-item"><i class="legend-line asset"></i>总资产</span>
+              <span class="legend-item"><i class="legend-line invest"></i>累计投入</span>
+            </div>
+          </div>
+          <div id="growthChart" class="chart chart-lg" role="img" aria-label="资产增长曲线"></div>
+          <div class="chart-note" id="reinvestNote">
+            <span class="note-spark">✦</span>
+            <span id="reinvestDiffText">正在计算分红再投资的复利差额…</span>
+          </div>
+        </section>
+
+        <div class="insights" id="insights">
+          <article class="insight">
+            <div class="insight-head">
+              <span class="insight-index">I</span>
+              <span>股息回收</span>
+            </div>
+            <strong class="insight-value" id="coverageValue">—</strong>
+            <p class="insight-text" id="coverageText">累计分红占累计投入的比例</p>
+            <div class="progress"><span id="coverageBar"></span></div>
+          </article>
+
+          <article class="insight">
+            <div class="insight-head">
+              <span class="insight-index">II</span>
+              <span id="compoundLabel">复利差额</span>
+            </div>
+            <strong class="insight-value" id="compoundValue">—</strong>
+            <p class="insight-text" id="compoundText">分红再投资与现金分红的期末差额</p>
+          </article>
+
+          <article class="insight">
+            <div class="insight-head">
+              <span class="insight-index">III</span>
+              <span>当前股息率</span>
+            </div>
+            <strong class="insight-value" id="yieldValue">—</strong>
+            <p class="insight-text" id="yieldText">近 12 个月分红 / 期末市值</p>
+          </article>
+        </div>
+
+        <div class="chart-grid">
+          <section class="card">
+            <div class="card-head compact">
+              <div>
+                <p class="card-kicker">DIVIDEND INCOME</p>
+                <h2>年度分红</h2>
+              </div>
+              <span class="unit" id="dividendUnit">CNY</span>
+            </div>
+            <div id="dividendChart" class="chart chart-md" role="img" aria-label="年度分红柱状图"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-head compact">
+              <div>
+                <p class="card-kicker">CONTRIBUTION & SHARES</p>
+                <h2>定投与持股</h2>
+              </div>
+              <div class="legend small">
+                <span class="legend-item"><i class="legend-bar"></i>投入</span>
+                <span class="legend-item"><i class="legend-line shares"></i>股数</span>
+              </div>
+            </div>
+            <div id="sharesChart" class="chart chart-md" role="img" aria-label="年度投入与持股数量"></div>
+          </section>
+        </div>
+
+        <section class="card table-card">
+          <div class="card-head compact">
+            <div>
+              <p class="card-kicker">YEAR BY YEAR</p>
+              <h2>逐年明细</h2>
+            </div>
+            <span class="unit" id="tableUnit">单位：CNY</span>
+          </div>
+          <p class="table-hint">点击年份，展开当年每次分红、红利税与再投入明细。</p>
+          <div class="table-wrap">
+            <table class="year-table">
+              <thead>
+                <tr>
+                  <th>年份</th>
+                  <th>年末资产</th>
+                  <th>当年投入</th>
+                  <th class="col-gross">税前分红</th>
+                  <th class="col-tax">红利税</th>
+                  <th>税后分红</th>
+                  <th class="col-reinvest">再投份额</th>
+                  <th class="col-shares">年末股数</th>
+                  <th>累计收益</th>
+                </tr>
+              </thead>
+              <tbody id="yearlyTableBody">
+                <tr>
+                  <td colspan="9" class="empty-cell">正在计算…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="table-foot" id="tableFootnote">—</p>
+        </section>
+
+        <section class="notes">
+          <div class="notes-head">
+            <h3>计算说明</h3>
+            <span>METHODOLOGY</span>
+          </div>
+          <ul>
+            <li>A 股采用<strong>东方财富不复权价 + 实际每股派息/送转</strong>；美股、港股采用 Yahoo Finance 拆股复权数据。</li>
+            <li>开始日必须是交易日；定投遇非交易日可在高级设定中选择<strong>顺延</strong>或<strong>跳过</strong>，不会在非交易日成交。</li>
+            <li>送转股按实际比例增加持股（送股/转增本身未单独计税）；A 股优先使用东方财富，失败时回退 Yahoo 并标记“备用数据”。</li>
+            <li>分红在除息日按收盘价再投资；A 股红利税按<strong>除息日持有期</strong>差别化估算（≤1 月 20%、1 月–1 年 10%、&gt;1 年 0%），实际在卖出时结算。</li>
+            <li>不计佣金、印花税、汇率波动与现金利息；分红明细见逐年明细。历史测算不构成投资建议。</li>
+          </ul>
+          <p class="notes-callout">
+            与券商对账单的差异通常来自：分红到账/再投时点、红利税实际结算方式、佣金税费、汇率、碎股与送转股登记时间。
+          </p>
+        </section>
+
+        <footer class="site-footer">
+          <span>息壤 · XĪRǍNG</span>
+          <span>用历史数据，理解复利。</span>
+        </footer>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="/vendor/echarts.min.js"></script>
+    <script type="module" src="/js/app.js"></script>
+  </body>
+</html>

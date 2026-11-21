@@ -1,0 +1,513 @@
+/**
+ * 股息再投资模拟引擎（纯函数，浏览器与 Node 共用）
+ *
+ * 数据约定：
+ *  - prices: [["YYYY-MM-DD", close], ...] 按日期升序。
+ *    A 股使用东方财富不复权价；美/港股使用 Yahoo 拆股复权价。
+ *  - dividends: [["YYYY-MM-DD", 每股现金分红], ...]，除息日 + 每股税前金额。
+ *  - shareEvents: [["YYYY-MM-DD", ratio], ...]，送转股事件，ratio 为除权后股数倍数。
+ *    例如 10 送 1 转 1 => ratio = 1.2。Yahoo 数据已复权，传空数组。
+ *
+ * 交易顺序（每个交易日）：
+ *  1. 先按“除息日前持股”计算并派发分红；
+ *  2. 再处理送转股（老股东获得新股）；
+ *  3. 分红再投资 / 当期定投按当日收盘价买入；
+ *  4. 收盘估值。
+ */
+
+const DAY_MS = 86400000;
+
+export function parseDate(str) {
+  const [y, m, d] = str.split('-').map(Number);
+  return Date.UTC(y, m - 1, d);
+}
+
+export function formatDate(ms) {
+  const d = new Date(ms);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+
+function daysInMonth(year, month /* 1-12 */) {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+/** 在 start 的月份基础上加 k 个月，日期取 min(起始日, 当月天数) */
+function addMonthsClamped(startMs, k) {
+  const d = new Date(startMs);
+  const year = d.getUTCFullYear();
+  const month = d.getUTCMonth() + k;
+  const target = new Date(Date.UTC(year, month, 1));
+  const y = target.getUTCFullYear();
+  const m = target.getUTCMonth() + 1;
+  const day = Math.min(d.getUTCDate(), daysInMonth(y, m));
+  return Date.UTC(y, m - 1, day);
+}
+
+function addYearsClamped(startMs, k) {
+  const d = new Date(startMs);
+  const y = d.getUTCFullYear() + k;
+  const m = d.getUTCMonth() + 1;
+  const day = Math.min(d.getUTCDate(), daysInMonth(y, m));
+  return Date.UTC(y, m - 1, day);
+}
+
+/** 生成定投锚点（自然日，遇到节假日由调用方按策略处理） */
+export function buildAnchors(startDate, endDate, frequency) {
+  if (frequency !== 'monthly' && frequency !== 'yearly') return [];
+  const start = parseDate(startDate);
+  const end = parseDate(endDate);
+  const anchors = [];
+  for (let k = 0; k < 2000; k++) {
+    const ms = frequency === 'monthly' ? addMonthsClamped(start, k) : addYearsClamped(start, k);
+    if (ms > end) break;
+    anchors.push(formatDate(ms));
+  }
+  return anchors;
+}
+
+/** 找到第一个 >= target 的交易日索引；不存在返回 -1 */
+function lowerBound(prices, target) {
+  let lo = 0;
+  let hi = prices.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (prices[mid][0] < target) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo < prices.length ? lo : -1;
+}
+
+/**
+ * A 股差别化红利税（按除息日持有期估算）：
+ *  - 持有 ≤ 1 个月：20%
+ *  - 1 个月 < 持有 ≤ 1 年：10%
+ *  - 持有 > 1 年：0%
+ */
+export function holdingPeriodTaxRate(days) {
+  if (days <= 30) return 0.2;
+  if (days <= 365) return 0.1;
+  return 0;
+}
+
+const round = (n, p = 2) => Math.round(n * 10 ** p) / 10 ** p;
+
+/**
+ * @param {object} input
+ * @param {Array<[string, number]>} input.prices
+ * @param {Array<[string, number]>} input.dividends 除息日、每股税前分红
+ * @param {Array<[string, number]>} [input.shareEvents] 送转股：日期、股数倍数
+ * @param {string} input.startDate 必须是交易日
+ * @param {string} [input.endDate]
+ * @param {number} input.initialAmount
+ * @param {'none'|'monthly'|'yearly'} input.frequency
+ * @param {number} input.recurringAmount
+ * @param {boolean} input.reinvest
+ * @param {'holding'|'fixed'} [input.taxMode]
+ * @param {number} [input.taxRate] 固定税率 0-1
+ * @param {'roll'|'skip'} [input.schedulePolicy] 定投遇非交易日：顺延或跳过
+ */
+export function simulate(input) {
+  const {
+    prices = [],
+    dividends = [],
+    shareEvents = [],
+    startDate,
+    endDate,
+    initialAmount = 0,
+    frequency = 'none',
+    recurringAmount = 0,
+    reinvest = true,
+    taxMode = 'fixed',
+    taxRate = 0,
+    schedulePolicy = 'roll',
+  } = input;
+
+  if (!prices.length) throw new Error('没有可用的行情数据');
+  if (!startDate) throw new Error('请选择开始日期');
+  if (!prices.some(([d]) => d === startDate)) {
+    throw new Error('开始日期不是交易日，请从交易日历中选择');
+  }
+
+  const initial = Math.max(0, Number(initialAmount) || 0);
+  const recurring = Math.max(0, Number(recurringAmount) || 0);
+  const fixedTax = Math.min(1, Math.max(0, Number(taxRate) || 0));
+  const freq = frequency === 'monthly' || frequency === 'yearly' ? frequency : 'none';
+  const policy = schedulePolicy === 'skip' ? 'skip' : 'roll';
+  const useHoldingTax = taxMode === 'holding';
+
+  if (initial <= 0 && (freq === 'none' || recurring <= 0)) {
+    throw new Error('请输入大于 0 的投资金额');
+  }
+
+  const priceDates = prices.map(([d]) => d);
+  const startIdx = priceDates.indexOf(startDate);
+  if (startIdx < 0) throw new Error('开始日期不是交易日，请从交易日历中选择');
+  const end = endDate || priceDates[priceDates.length - 1];
+  if (end < startDate) throw new Error('结束日期不能早于开始日期');
+  const lastIdx = lowerBound(prices, end);
+  const series = prices.slice(startIdx, lastIdx >= 0 ? lastIdx + 1 : undefined);
+  const lastTradeDate = series[series.length - 1][0];
+  const seriesDates = new Set(series.map(([d]) => d));
+
+  // 定投计划：锚点 -> 实际交易日
+  const contributions = new Map();
+  const addContribution = (tradeDate, amount) => {
+    if (amount <= 0) return;
+    contributions.set(tradeDate, (contributions.get(tradeDate) || 0) + amount);
+  };
+
+  if (initial > 0) addContribution(startDate, initial);
+  if (freq !== 'none' && recurring > 0) {
+    for (const anchor of buildAnchors(startDate, lastTradeDate, freq)) {
+      if (seriesDates.has(anchor)) {
+        addContribution(anchor, recurring);
+      } else if (policy === 'roll') {
+        const idx = lowerBound(series, anchor);
+        if (idx >= 0) addContribution(series[idx][0], recurring);
+      }
+    }
+  }
+  if (!contributions.size) throw new Error('定投计划为空，请检查开始日期与金额');
+
+  // 分红事件：除息日 -> 实际交易日（遇非交易日顺延）
+  const dividendEvents = new Map();
+  for (const [date, amount] of dividends) {
+    if (!(amount > 0)) continue;
+    if (date < startDate) continue;
+    const idx = lowerBound(series, date);
+    if (idx < 0) continue;
+    const tradeDate = series[idx][0];
+    const list = dividendEvents.get(tradeDate) || [];
+    list.push({ exDate: date, amount });
+    dividendEvents.set(tradeDate, list);
+  }
+
+  // 送转股事件：日期 -> 倍数（同日多个事件相乘）
+  const shareEventMap = new Map();
+  for (const [date, ratio] of shareEvents) {
+    if (!(ratio > 1)) continue;
+    if (date < startDate) continue;
+    const idx = lowerBound(series, date);
+    if (idx < 0) continue;
+    const tradeDate = series[idx][0];
+    shareEventMap.set(tradeDate, (shareEventMap.get(tradeDate) || 1) * ratio);
+  }
+
+  let lots = []; // { shares, date }，先进先出并不卖出，仅用于持有期计税
+  let shares = 0;
+  let cash = 0;
+  let pendingDividendCash = 0;
+  let totalInvested = 0;
+  let grossDividends = 0;
+  let totalTax = 0;
+  let totalDividends = 0;
+  let dividendCount = 0;
+  let totalReinvestedShares = 0;
+  let lastPrice = series[0][1];
+
+  const points = [];
+  const transactions = [];
+  const yearly = [];
+  const cashflows = [];
+
+  let yearRow = null;
+  let prevValue = 0;
+
+  const addLot = (lotShares, date) => {
+    if (lotShares <= 0) return;
+    lots.push({ shares: lotShares, date });
+    shares += lotShares;
+  };
+
+  const ensureYear = (year) => {
+    if (!yearRow) {
+      yearRow = {
+        year,
+        startValue: prevValue,
+        endValue: prevValue,
+        invested: 0,
+        grossDividends: 0,
+        tax: 0,
+        dividends: 0,
+        dividendCount: 0,
+        reinvestedShares: 0,
+        bonusShares: 0,
+        endShares: 0,
+        gain: 0,
+        partial: false,
+      };
+    } else if (year !== yearRow.year) {
+      yearRow.gain = yearRow.endValue - yearRow.startValue - yearRow.invested;
+      yearRow.partial = false;
+      yearly.push(yearRow);
+      prevValue = yearRow.endValue;
+      yearRow = {
+        year,
+        startValue: prevValue,
+        endValue: prevValue,
+        invested: 0,
+        grossDividends: 0,
+        tax: 0,
+        dividends: 0,
+        dividendCount: 0,
+        reinvestedShares: 0,
+        bonusShares: 0,
+        endShares: 0,
+        gain: 0,
+        partial: false,
+      };
+    }
+  };
+
+  for (const [date, price] of series) {
+    const year = Number(date.slice(0, 4));
+    ensureYear(year);
+    lastPrice = price;
+
+    // 1) 分红：按除息日前持股计算，当日新买入份额不参与
+    const divs = dividendEvents.get(date);
+    const dayDividendRecords = [];
+    if (divs && shares > 0) {
+      for (const ev of divs) {
+        let dayGross = 0;
+        let dayTax = 0;
+        const lotDetails = [];
+        for (const lot of lots) {
+          if (lot.shares <= 0) continue;
+          const gross = lot.shares * ev.amount;
+          const days = Math.max(
+            0,
+            Math.floor((parseDate(ev.exDate) - parseDate(lot.date)) / DAY_MS),
+          );
+          const rate = useHoldingTax ? holdingPeriodTaxRate(days) : fixedTax;
+          const tax = gross * rate;
+          dayGross += gross;
+          dayTax += tax;
+          lotDetails.push({
+            shares: lot.shares,
+            acquired: lot.date,
+            days,
+            rate,
+            gross,
+            tax,
+          });
+        }
+        if (dayGross <= 0) continue;
+        const net = dayGross - dayTax;
+        const record = {
+          type: 'dividend',
+          date,
+          exDate: ev.exDate,
+          perShare: ev.amount,
+          sharesBefore: shares,
+          gross: dayGross,
+          tax: dayTax,
+          net,
+          taxRate: dayGross > 0 ? dayTax / dayGross : 0,
+          reinvested: Boolean(reinvest),
+          price,
+          sharesBought: 0,
+          lots: lotDetails,
+        };
+        transactions.push(record);
+        dayDividendRecords.push(record);
+        if (reinvest) pendingDividendCash += net;
+        else cash += net;
+
+        grossDividends += dayGross;
+        totalTax += dayTax;
+        totalDividends += net;
+        dividendCount += 1;
+        yearRow.grossDividends += dayGross;
+        yearRow.tax += dayTax;
+        yearRow.dividends += net;
+        yearRow.dividendCount += 1;
+      }
+    }
+
+    // 2) 送转股：老股东按倍数获得新股（持有期继承原份额）
+    const shareRatio = shareEventMap.get(date);
+    if (shareRatio && shares > 0) {
+      const before = shares;
+      for (const lot of lots) lot.shares *= shareRatio;
+      shares *= shareRatio;
+      const added = shares - before;
+      transactions.push({
+        type: 'share',
+        date,
+        ratio: shareRatio,
+        before,
+        added,
+        after: shares,
+      });
+      yearRow.bonusShares += added;
+    }
+
+    // 3) 分红再投资：在送转之后按当日收盘价买入
+    if (reinvest && pendingDividendCash > 0) {
+      const bought = pendingDividendCash / price;
+      addLot(bought, date);
+      totalReinvestedShares += bought;
+      yearRow.reinvestedShares += bought;
+      const dayNet = dayDividendRecords.reduce((sum, r) => sum + r.net, 0);
+      for (const rec of dayDividendRecords) {
+        rec.price = price;
+        rec.sharesBought = dayNet > 0 ? (bought * rec.net) / dayNet : 0;
+      }
+      pendingDividendCash = 0;
+    }
+
+    // 4) 当期定投
+    const contribution = contributions.get(date);
+    if (contribution) {
+      const bought = contribution / price;
+      addLot(bought, date);
+      totalInvested += contribution;
+      yearRow.invested += contribution;
+      transactions.push({
+        type: 'buy',
+        date,
+        amount: contribution,
+        price,
+        shares: bought,
+      });
+      cashflows.push({ date, amount: -contribution });
+    }
+
+    const value = shares * price + cash;
+    points.push({
+      date,
+      value,
+      invested: totalInvested,
+      shares,
+      cash,
+      dividends: totalDividends,
+      price,
+    });
+
+    yearRow.endValue = value;
+    yearRow.endShares = shares;
+  }
+
+  if (yearRow) {
+    yearRow.gain = yearRow.endValue - yearRow.startValue - yearRow.invested;
+    yearRow.partial = lastTradeDate.slice(5) !== '12-31';
+    yearly.push(yearRow);
+  }
+  if (yearly.length) {
+    yearly[0].partial = yearly[0].partial || points[0].date.slice(5) !== '01-01';
+  }
+
+  const finalValue = points[points.length - 1].value;
+  cashflows.push({ date: lastTradeDate, amount: finalValue });
+
+  const totalReturn = finalValue - totalInvested;
+  const startMs = parseDate(points[0].date);
+  const endMs = parseDate(lastTradeDate);
+  const years = Math.max(1 / 365, (endMs - startMs) / DAY_MS / 365);
+  const ttmStart = formatDate(endMs - 365 * DAY_MS);
+  const ttmDividends = transactions
+    .filter((t) => t.type === 'dividend' && t.date > ttmStart)
+    .reduce((sum, t) => sum + t.net, 0);
+
+  return {
+    points,
+    transactions,
+    yearly,
+    summary: {
+      startDate: points[0].date,
+      endDate: lastTradeDate,
+      requestedStartDate: startDate,
+      years,
+      totalInvested,
+      grossDividends,
+      totalTax,
+      totalDividends,
+      effectiveTaxRate: grossDividends > 0 ? totalTax / grossDividends : 0,
+      dividendCount,
+      finalValue,
+      finalShares: shares,
+      cash,
+      totalReturn,
+      returnPct: totalInvested > 0 ? totalReturn / totalInvested : null,
+      multiple: totalInvested > 0 ? finalValue / totalInvested : null,
+      xirr: xirr(cashflows),
+      dividendCoverage: totalInvested > 0 ? totalDividends / totalInvested : null,
+      ttmDividends,
+      currentYield: finalValue > 0 ? ttmDividends / finalValue : null,
+      totalReinvestedShares,
+      firstPrice: points[0].price,
+      lastPrice,
+      priceReturn: points[0].price > 0 ? lastPrice / points[0].price - 1 : null,
+      taxMode: useHoldingTax ? 'holding' : 'fixed',
+      taxRate: fixedTax,
+      schedulePolicy: policy,
+    },
+  };
+}
+
+/** 扩展内部收益率（资金加权年化），无解返回 null */
+export function xirr(flows) {
+  if (!flows || flows.length < 2) return null;
+  const sorted = [...flows].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  const t0 = parseDate(sorted[0].date);
+  const hasNeg = sorted.some((f) => f.amount < 0);
+  const hasPos = sorted.some((f) => f.amount > 0);
+  if (!hasNeg || !hasPos) return null;
+
+  const t = sorted.map((f) => (parseDate(f.date) - t0) / DAY_MS / 365);
+  const npv = (r) => sorted.reduce((s, f, i) => s + f.amount / (1 + r) ** t[i], 0);
+  const dnpv = (r) =>
+    sorted.reduce((s, f, i) => s - (t[i] * f.amount) / (1 + r) ** (t[i] + 1), 0);
+
+  let r = 0.1;
+  for (let i = 0; i < 60; i++) {
+    const f = npv(r);
+    if (Math.abs(f) < 1e-7) return r;
+    const d = dnpv(r);
+    if (!Number.isFinite(d) || Math.abs(d) < 1e-12) break;
+    const next = r - f / d;
+    if (!Number.isFinite(next) || next <= -0.999999) break;
+    if (Math.abs(next - r) < 1e-10) return next;
+    r = next;
+  }
+
+  let lo = -0.999999;
+  let hi = 0.5;
+  let flo = npv(lo);
+  let fhi = npv(hi);
+  let guard = 0;
+  while (flo * fhi > 0 && hi < 1e4 && guard++ < 100) {
+    hi = hi * 2 + 1;
+    fhi = npv(hi);
+  }
+  if (flo * fhi > 0) return null;
+  for (let i = 0; i < 200; i++) {
+    const mid = (lo + hi) / 2;
+    const fmid = npv(mid);
+    if (Math.abs(fmid) < 1e-9) return mid;
+    if (flo * fmid <= 0) {
+      hi = mid;
+      fhi = fmid;
+    } else {
+      lo = mid;
+      flo = fmid;
+    }
+  }
+  return (lo + hi) / 2;
+}
+
+export function summarizeByYear(simulation) {
+  return simulation.yearly.map((y) => ({
+    ...y,
+    endValue: round(y.endValue),
+    invested: round(y.invested),
+    grossDividends: round(y.grossDividends),
+    tax: round(y.tax),
+    dividends: round(y.dividends),
+    reinvestedShares: round(y.reinvestedShares, 2),
+    bonusShares: round(y.bonusShares, 2),
+    gain: round(y.gain),
+    endShares: round(y.endShares, 2),
+  }));
+}
