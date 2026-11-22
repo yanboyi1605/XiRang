@@ -64,7 +64,7 @@
       <view class="result-icon">{{item.icon}}</view>
       <view class="result-copy">
         <text class="result-name">{{item.name}}</text>
-        <text class="result-code">{{item.code || item.symbol}} · {{item.symbol}}</text>
+        <text class="result-code">{{item.symbol}}</text>
       </view>
       <text class="result-market">{{item.marketLabel}}</text>
     </view>

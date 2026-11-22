@@ -496,7 +496,7 @@ function renderSearchResults(items) {
     name.textContent = item.name;
     const code = document.createElement('span');
     code.className = 'sr-code';
-    code.textContent = `${item.code || ''} · ${item.symbol}`;
+    code.textContent = item.symbol;
     copy.append(name, code);
     const market = document.createElement('span');
     market.className = 'sr-market';
