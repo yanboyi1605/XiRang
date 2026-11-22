@@ -1,0 +1,19 @@
+{
+  "description": "息壤 · 股息再投资计算器",
+  "packOptions": {
+    "ignore": []
+  },
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "newFeature": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.5.0",
+  "appid": "touristappid",
+  "projectname": "xirang-dividend",
+  "miniprogramRoot": "./"
+}

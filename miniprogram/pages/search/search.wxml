@@ -1,0 +1,84 @@
+<view class="page search-page">
+  <view class="search-box">
+    <text class="search-icon">⌕</text>
+    <input
+      class="search-input"
+      value="{{query}}"
+      placeholder="搜索名称 / 拼音 / 代码，如 工商银行、gsyh、601398"
+      placeholder-class="search-placeholder"
+      focus="{{true}}"
+      confirm-type="search"
+      bindinput="onInput"
+      bindconfirm="onConfirm"
+    />
+    <text wx:if="{{query}}" class="clear-btn" bindtap="clearQuery">×</text>
+  </view>
+
+  <view class="market-row">
+    <view class="market-chip {{market == 'ALL' ? 'on' : ''}}" data-market="ALL" bindtap="onMarket">全部</view>
+    <view class="market-chip {{market == 'CN' ? 'on' : ''}}" data-market="CN" bindtap="onMarket">A股</view>
+    <view class="market-chip {{market == 'HK' ? 'on' : ''}}" data-market="HK" bindtap="onMarket">港股</view>
+    <view class="market-chip {{market == 'US' ? 'on' : ''}}" data-market="US" bindtap="onMarket">美股</view>
+  </view>
+
+  <view wx:if="{{!query}}">
+    <view class="section-head hot-head">
+      <view>
+        <text class="section-kicker">POPULAR</text>
+        <text class="section-title">热门股票</text>
+      </view>
+      <text class="mini-label">支持中文搜索</text>
+    </view>
+    <view class="hot-list">
+      <view
+        wx:for="{{hot}}"
+        wx:key="symbol"
+        class="hot-item"
+        data-symbol="{{item.symbol}}"
+        data-name="{{item.name}}"
+        data-market="{{item.market}}"
+        bindtap="onHot"
+      >
+        <view class="hot-icon">{{item.icon}}</view>
+        <view class="hot-copy">
+          <text class="hot-name">{{item.name}}</text>
+          <text class="hot-code">{{item.symbol}}</text>
+        </view>
+        <text class="hot-market">{{item.marketLabel}}</text>
+      </view>
+    </view>
+    <view class="search-tip">
+      <text>可以输入：工商银行、工行、gsyh、601398、腾讯、0700.HK、苹果、AAPL</text>
+    </view>
+  </view>
+
+  <view wx:if="{{query}}">
+    <view class="result-head">
+      <text class="result-title">搜索结果</text>
+      <text class="mini-label">{{results.length}} 个</text>
+    </view>
+
+    <view wx:if="{{searching}}" class="searching">正在搜索…</view>
+
+    <view wx:for="{{results}}" wx:key="symbol" class="result-item" data-index="{{index}}" bindtap="onSelect">
+      <view class="result-icon">{{item.icon}}</view>
+      <view class="result-copy">
+        <text class="result-name">{{item.name}}</text>
+        <text class="result-code">{{item.code || item.symbol}} · {{item.symbol}}</text>
+      </view>
+      <text class="result-market">{{item.marketLabel}}</text>
+    </view>
+
+    <view wx:if="{{!searching && searched && !results.length}}" class="empty-state">
+      <text class="empty-title">没有找到匹配的股票</text>
+      <text class="empty-text">换一个中文名、拼音或代码试试。</text>
+      <view wx:if="{{canDirect}}" class="direct-btn" bindtap="loadDirect">
+        直接加载代码 {{query}}
+      </view>
+    </view>
+
+    <view wx:if="{{!searching && results.length && canDirect}}" class="direct-row" bindtap="loadDirect">
+      没有想要的？直接加载代码 {{query}}
+    </view>
+  </view>
+</view>

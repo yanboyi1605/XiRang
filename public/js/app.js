@@ -50,12 +50,15 @@ const state = {
   schedulePolicy: 'roll',
   dateNotice: '',
   expandedYears: new Set(),
+  searchTimer: null,
+  searchSeq: 0,
 };
 
 const els = {
   configForm: $('#configForm'),
   symbolInput: $('#symbolInput'),
   loadSymbolBtn: $('#loadSymbolBtn'),
+  searchResults: $('#searchResults'),
   presets: $('#presetsEl'),
   stockIcon: $('#stockIcon'),
   stockCardName: $('#stockCardName'),
@@ -461,6 +464,77 @@ async function fetchPresets() {
 }
 
 /* =========================================================
+   Stock search (Chinese / pinyin / code)
+   ========================================================= */
+
+function hideSearchResults() {
+  if (els.searchResults) els.searchResults.hidden = true;
+}
+
+function renderSearchResults(items) {
+  if (!els.searchResults) return;
+  els.searchResults.innerHTML = '';
+  if (!items.length) {
+    const empty = document.createElement('div');
+    empty.className = 'search-empty';
+    empty.textContent = '没有匹配的股票，可直接输入完整代码后加载。';
+    els.searchResults.appendChild(empty);
+    els.searchResults.hidden = false;
+    return;
+  }
+  for (const item of items) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'search-result';
+    const icon = document.createElement('span');
+    icon.className = 'sr-icon';
+    icon.textContent = (item.name || item.symbol).charAt(0);
+    const copy = document.createElement('span');
+    copy.className = 'sr-copy';
+    const name = document.createElement('span');
+    name.className = 'sr-name';
+    name.textContent = item.name;
+    const code = document.createElement('span');
+    code.className = 'sr-code';
+    code.textContent = `${item.code || ''} · ${item.symbol}`;
+    copy.append(name, code);
+    const market = document.createElement('span');
+    market.className = 'sr-market';
+    market.textContent = item.marketLabel || item.market || '';
+    btn.append(icon, copy, market);
+    btn.addEventListener('click', () => {
+      hideSearchResults();
+      els.symbolInput.value = item.symbol;
+      loadStock(item.symbol);
+    });
+    els.searchResults.appendChild(btn);
+  }
+  els.searchResults.hidden = false;
+}
+
+async function searchSymbols(query) {
+  const q = String(query || '').trim();
+  if (!q) {
+    hideSearchResults();
+    return;
+  }
+  const seq = ++state.searchSeq;
+  try {
+    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=8`);
+    const json = await res.json();
+    if (seq !== state.searchSeq) return;
+    if (json.ok) renderSearchResults(json.results || []);
+  } catch {
+    if (seq === state.searchSeq) hideSearchResults();
+  }
+}
+
+function scheduleSymbolSearch() {
+  clearTimeout(state.searchTimer);
+  state.searchTimer = setTimeout(() => searchSymbols(els.symbolInput.value), 220);
+}
+
+/* =========================================================
    Stock loading
    ========================================================= */
 
@@ -495,6 +569,7 @@ async function loadStock(rawSymbol, { force = false } = {}) {
     showFormError('股票代码格式不正确，例如 601398、0700.HK、AAPL');
     return;
   }
+  hideSearchResults();
 
   if (!force && state.cache.has(symbol)) {
     applyStock(state.cache.get(symbol));
@@ -1274,7 +1349,16 @@ function bindEvents() {
     if (e.key === 'Enter') {
       e.preventDefault();
       loadStock(els.symbolInput.value);
+    } else if (e.key === 'Escape') {
+      hideSearchResults();
     }
+  });
+  els.symbolInput.addEventListener('input', scheduleSymbolSearch);
+  els.symbolInput.addEventListener('focus', () => {
+    if (els.symbolInput.value.trim()) scheduleSymbolSearch();
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.symbol-field')) hideSearchResults();
   });
 
   els.freqSegment.addEventListener('click', (e) => {

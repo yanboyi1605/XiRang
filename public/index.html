@@ -56,20 +56,23 @@
                 股票代码
                 <small>A股 / 港股 / 美股</small>
               </label>
-              <div class="symbol-row">
-                <input
-                  id="symbolInput"
-                  class="input symbol-input"
-                  type="text"
-                  value="601398.SS"
-                  placeholder="601398 / AAPL / 0700.HK"
-                  autocomplete="off"
-                  spellcheck="false"
-                  aria-describedby="symbolHint"
-                />
-                <button class="load-btn" id="loadSymbolBtn" type="button">加载</button>
+              <div class="symbol-field">
+                <div class="symbol-row">
+                  <input
+                    id="symbolInput"
+                    class="input symbol-input"
+                    type="text"
+                    value="601398.SS"
+                    placeholder="工商银行 / gsyh / 601398"
+                    autocomplete="off"
+                    spellcheck="false"
+                    aria-describedby="symbolHint"
+                  />
+                  <button class="load-btn" id="loadSymbolBtn" type="button">加载</button>
+                </div>
+                <div class="search-results" id="searchResults" hidden></div>
+                <p class="hint" id="symbolHint">支持中文名称、拼音首字母、股票代码；选中后按回车或点“加载”。</p>
               </div>
-              <p class="hint" id="symbolHint">输入代码后回车，或从下方选择一个示例。</p>
               <div class="presets" id="presetsEl" aria-label="示例股票"></div>
             </div>
 

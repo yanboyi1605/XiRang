@@ -1,0 +1,136 @@
+page {
+  min-height: 100%;
+  color: #17251f;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 28rpx;
+  background:
+    radial-gradient(700rpx 420rpx at 92% -6%, rgba(196, 157, 96, 0.2), transparent 62%),
+    linear-gradient(180deg, #f6f1e7 0%, #f4efe4 46%, #efe8db 100%);
+}
+
+view,
+text,
+input,
+button,
+picker,
+scroll-view,
+canvas {
+  box-sizing: border-box;
+}
+
+button {
+  padding: 0;
+  margin: 0;
+  line-height: normal;
+  background: none;
+  border: 0;
+}
+
+button::after {
+  border: 0;
+}
+
+.page {
+  padding: 22rpx 24rpx calc(50rpx + env(safe-area-inset-bottom));
+}
+
+.card {
+  padding: 28rpx;
+  margin-bottom: 22rpx;
+  background: rgba(251, 248, 240, 0.94);
+  border: 1rpx solid rgba(23, 37, 31, 0.08);
+  border-radius: 28rpx;
+  box-shadow: 0 22rpx 50rpx -40rpx rgba(18, 59, 44, 0.55);
+}
+
+.muted {
+  color: #788279;
+}
+
+.up {
+  color: #b24530 !important;
+}
+
+.down {
+  color: #2d7a5c !important;
+}
+
+.section-kicker {
+  display: block;
+  margin-bottom: 6rpx;
+  color: #b58f52;
+  font-size: 18rpx;
+  font-weight: 700;
+  letter-spacing: 4rpx;
+}
+
+.section-title {
+  color: #17251f;
+  font-family: Georgia, "Songti SC", "STSong", serif;
+  font-size: 36rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18rpx;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6rpx 14rpx;
+  color: #b58f52;
+  font-size: 18rpx;
+  border: 1rpx solid rgba(181, 143, 82, 0.28);
+  border-radius: 999rpx;
+}
+
+.mini-label {
+  color: #788279;
+  font-size: 20rpx;
+}
+
+.divider {
+  height: 1rpx;
+  margin: 20rpx 0;
+  background: rgba(23, 37, 31, 0.07);
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 92rpx;
+  color: #f7f1e5;
+  font-size: 28rpx;
+  font-weight: 600;
+  letter-spacing: 3rpx;
+  background: linear-gradient(120deg, #123b2c, #1b503a);
+  border-radius: 22rpx;
+  box-shadow: 0 18rpx 34rpx -22rpx rgba(18, 59, 44, 0.75);
+}
+
+.btn-primary:active {
+  opacity: 0.86;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 58rpx;
+  padding: 0 22rpx;
+  color: #123b2c;
+  font-size: 22rpx;
+  background: rgba(255, 253, 247, 0.45);
+  border: 1rpx solid rgba(23, 37, 31, 0.14);
+  border-radius: 999rpx;
+}
+
+.safe-bottom {
+  height: env(safe-area-inset-bottom);
+}

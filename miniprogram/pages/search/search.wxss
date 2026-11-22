@@ -1,0 +1,248 @@
+.search-page {
+  padding-top: 28rpx;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 22rpx;
+  background: rgba(251, 248, 240, 0.96);
+  border: 1rpx solid rgba(23, 37, 31, 0.1);
+  border-radius: 22rpx;
+  box-shadow: 0 18rpx 40rpx -34rpx rgba(18, 59, 44, 0.5);
+}
+
+.search-icon {
+  margin-right: 12rpx;
+  color: #b58f52;
+  font-size: 36rpx;
+  line-height: 1;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  height: 80rpx;
+  color: #17251f;
+  font-size: 25rpx;
+}
+
+.search-placeholder {
+  color: #a0a89f;
+  font-size: 22rpx;
+}
+
+.clear-btn {
+  padding: 8rpx 10rpx;
+  color: #788279;
+  font-size: 36rpx;
+  line-height: 1;
+}
+
+.market-row {
+  display: flex;
+  padding: 18rpx 0 8rpx;
+}
+
+.market-chip {
+  padding: 8rpx 24rpx;
+  margin-right: 12rpx;
+  color: #788279;
+  font-size: 21rpx;
+  background: rgba(251, 248, 240, 0.6);
+  border: 1rpx solid rgba(23, 37, 31, 0.08);
+  border-radius: 999rpx;
+}
+
+.market-chip.on {
+  color: #f7f1e5;
+  background: #123b2c;
+  border-color: #123b2c;
+}
+
+.hot-head {
+  padding-top: 18rpx;
+}
+
+.hot-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.hot-item {
+  display: flex;
+  align-items: center;
+  width: 48.5%;
+  padding: 18rpx;
+  margin-bottom: 12rpx;
+  background: rgba(251, 248, 240, 0.94);
+  border: 1rpx solid rgba(23, 37, 31, 0.07);
+  border-radius: 18rpx;
+}
+
+.hot-item:active {
+  opacity: 0.8;
+}
+
+.hot-icon {
+  width: 54rpx;
+  height: 54rpx;
+  margin-right: 12rpx;
+  color: #f8f1e4;
+  font-family: Georgia, "Songti SC", serif;
+  font-size: 26rpx;
+  line-height: 54rpx;
+  text-align: center;
+  background: #123b2c;
+  border-radius: 12rpx;
+}
+
+.hot-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.hot-name {
+  overflow: hidden;
+  color: #17251f;
+  font-size: 22rpx;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hot-code {
+  margin-top: 3rpx;
+  color: #788279;
+  font-size: 16rpx;
+}
+
+.hot-market {
+  color: #b58f52;
+  font-size: 16rpx;
+}
+
+.search-tip {
+  padding: 18rpx;
+  margin-top: 10rpx;
+  color: #788279;
+  font-size: 18rpx;
+  line-height: 1.7;
+  background: rgba(236, 228, 211, 0.45);
+  border-radius: 14rpx;
+}
+
+.result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 2rpx 12rpx;
+}
+
+.result-title {
+  color: #17251f;
+  font-family: Georgia, "Songti SC", serif;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.searching {
+  padding: 40rpx 0;
+  color: #788279;
+  font-size: 22rpx;
+  text-align: center;
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  padding: 18rpx;
+  margin-bottom: 10rpx;
+  background: rgba(251, 248, 240, 0.94);
+  border: 1rpx solid rgba(23, 37, 31, 0.07);
+  border-radius: 18rpx;
+}
+
+.result-item:active {
+  background: rgba(181, 143, 82, 0.1);
+}
+
+.result-icon {
+  width: 56rpx;
+  height: 56rpx;
+  margin-right: 14rpx;
+  color: #f8f1e4;
+  font-family: Georgia, "Songti SC", serif;
+  font-size: 26rpx;
+  line-height: 56rpx;
+  text-align: center;
+  background: #123b2c;
+  border-radius: 13rpx;
+}
+
+.result-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.result-name {
+  color: #17251f;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.result-code {
+  margin-top: 3rpx;
+  color: #788279;
+  font-size: 17rpx;
+}
+
+.result-market {
+  padding: 3rpx 10rpx;
+  color: #b58f52;
+  font-size: 16rpx;
+  border: 1rpx solid rgba(181, 143, 82, 0.3);
+  border-radius: 6rpx;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 70rpx 20rpx;
+}
+
+.empty-title {
+  color: #3b4a42;
+  font-size: 25rpx;
+  font-weight: 600;
+}
+
+.empty-text {
+  margin-top: 8rpx;
+  color: #788279;
+  font-size: 20rpx;
+}
+
+.direct-btn {
+  padding: 16rpx 28rpx;
+  margin-top: 24rpx;
+  color: #f7f1e5;
+  font-size: 21rpx;
+  background: #123b2c;
+  border-radius: 999rpx;
+}
+
+.direct-row {
+  padding: 22rpx 0;
+  color: #1d5a43;
+  font-size: 20rpx;
+  text-align: center;
+  text-decoration: underline;
+}

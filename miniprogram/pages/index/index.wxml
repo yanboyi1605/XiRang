@@ -1,0 +1,303 @@
+<view class="page">
+  <view class="top-brand">
+    <view class="brand-left">
+      <view class="seal">息</view>
+      <view class="brand-copy">
+        <text class="brand-name">息壤</text>
+        <text class="brand-sub">DIVIDEND COMPOUNDER</text>
+      </view>
+    </view>
+    <text class="brand-tagline">把每一次分红，变成更多股份。</text>
+  </view>
+
+  <view class="card setup-card">
+    <view class="setup-head">
+      <view class="setup-title">
+        <text class="step-no">01</text>
+        <text class="setup-name">投资设定</text>
+      </view>
+      <text class="auto-pill">自动测算</text>
+    </view>
+
+    <view class="stock-picker" bindtap="openSearch">
+      <view class="stock-icon">{{stockIcon}}</view>
+      <view class="stock-copy">
+        <text class="stock-name">{{stockName}}</text>
+        <text class="stock-code">{{stockSymbol}} · {{stockMeta}}</text>
+      </view>
+      <view class="search-pill">搜索</view>
+    </view>
+    <view class="source-line">
+      <text>{{sourceLabel}}</text>
+      <text>{{stockPrice}}</text>
+    </view>
+    <view class="stock-range">{{stockRange}}</view>
+
+    <view class="field">
+      <view class="field-label">
+        <text>开始日期</text>
+        <text class="mini-label">买入日必须是交易日</text>
+      </view>
+      <picker mode="date" value="{{startDate}}" start="{{minDate}}" end="{{maxDate}}" bindchange="onDateChange">
+        <view class="input picker-value">
+          <text>{{startDate}}</text>
+          <text class="picker-arrow">▾</text>
+        </view>
+      </picker>
+      <view wx:if="{{dateNotice}}" class="date-notice">{{dateNotice}}</view>
+      <view wx:if="{{dateError}}" class="date-error">
+        <text>{{dateError}}</text>
+        <text wx:if="{{dateFix}}" class="text-link" bindtap="useNextDate">使用下一交易日 {{dateFix}}</text>
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <text>买入方式</text>
+      </view>
+      <view class="seg">
+        <view class="seg-btn {{freq == 'none' ? 'on' : ''}}" data-freq="none" bindtap="onFreq">一次性</view>
+        <view class="seg-btn {{freq == 'monthly' ? 'on' : ''}}" data-freq="monthly" bindtap="onFreq">每月定投</view>
+        <view class="seg-btn {{freq == 'yearly' ? 'on' : ''}}" data-freq="yearly" bindtap="onFreq">每年定投</view>
+      </view>
+    </view>
+
+    <view class="amount-row">
+      <view class="amount-item">
+        <text class="amount-label">{{freq == 'none' ? '投资金额' : '初始投入'}}</text>
+        <view class="money-box">
+          <text class="money-symbol">{{currencySymbol}}</text>
+          <input class="money-input" type="digit" value="{{initial}}" data-field="initial" bindinput="onAmountInput" />
+        </view>
+      </view>
+      <view class="amount-item" wx:if="{{freq != 'none'}}">
+        <text class="amount-label">{{freq == 'yearly' ? '每年定投' : '每月定投'}}</text>
+        <view class="money-box">
+          <text class="money-symbol">{{currencySymbol}}</text>
+          <input class="money-input" type="digit" value="{{recurring}}" data-field="recurring" bindinput="onAmountInput" />
+        </view>
+      </view>
+    </view>
+    <text class="hint">初始投入在开始日买入；定投从开始日（含）起按自然月/年执行。</text>
+
+    <view class="switch-row">
+      <view class="switch-copy">
+        <text class="switch-title">分红再投资</text>
+        <text class="switch-sub">除息日按收盘价自动买入</text>
+      </view>
+      <switch checked="{{reinvest}}" color="#123B2C" bindchange="onReinvest" />
+    </view>
+
+    <view class="adv-toggle" bindtap="toggleAdvanced">
+      <text>高级设定</text>
+      <text class="adv-arrow">{{showAdvanced ? '收起' : '红利税 / 规则'}}</text>
+    </view>
+
+    <view wx:if="{{showAdvanced}}" class="advanced-box">
+      <view wx:if="{{freq != 'none'}}" class="adv-block">
+        <text class="adv-label">定投遇非交易日</text>
+        <view class="mini-seg">
+          <view class="mini-seg-btn {{schedulePolicy == 'roll' ? 'on' : ''}}" data-value="roll" bindtap="onPolicy">顺延</view>
+          <view class="mini-seg-btn {{schedulePolicy == 'skip' ? 'on' : ''}}" data-value="skip" bindtap="onPolicy">跳过本期</view>
+        </view>
+        <text class="hint">顺延：下一个交易日买入；跳过：当月/当年不买。</text>
+      </view>
+
+      <view class="adv-block">
+        <view wx:if="{{isCN}}" class="check-row">
+          <switch checked="{{holdingTax}}" color="#123B2C" bindchange="onHoldingTax" />
+          <view class="check-copy">
+            <text class="switch-title">按 A 股持有期差别计税</text>
+            <text class="switch-sub">≤1月 20% · 1月–1年 10% · &gt;1年 0%</text>
+          </view>
+        </view>
+        <view wx:if="{{!holdingTax}}" class="tax-row">
+          <text class="tax-label">固定税率</text>
+          <input class="tax-input" type="digit" value="{{taxRate}}" bindinput="onTaxInput" />
+          <text class="tax-unit">%</text>
+        </view>
+        <text class="hint">{{isCN && holdingTax ? '按除息日各批次持有期加权估算；实际在卖出时结算。' : '美股/港股常见预扣税率 10%–30%，可按券商实际填写。'}}</text>
+      </view>
+    </view>
+
+    <button class="btn-primary calc-btn" bindtap="onCalculate">{{loading ? '获取行情…' : '开始测算'}}</button>
+    <text class="panel-note">历史数据测算，不含佣金、汇率与现金利息。</text>
+  </view>
+
+  <view wx:if="{{error}}" class="error-banner">
+    <text>{{error}}</text>
+    <text class="text-link" bindtap="onRetry">重试</text>
+  </view>
+
+  <view wx:if="{{loading && !result}}" class="card empty-card">
+    <text>正在获取行情…</text>
+    <text class="muted">连接数据源，请稍候</text>
+  </view>
+
+  <view wx:if="{{result}}" id="result">
+    <view class="hero-card">
+      <view class="hero-label">
+        <view class="gold-dot"></view>
+        <text>期末账户总资产</text>
+        <text class="hero-asof">截至 {{result.asOf}}</text>
+      </view>
+      <view class="hero-value">
+        <text class="hero-currency">{{currencySymbol}}</text>
+        <text class="hero-number">{{result.finalValue}}</text>
+      </view>
+      <view class="hero-sub">
+        <text class="gain-pill {{result.returnClass}}">{{result.returnPct}}</text>
+        <text class="hero-profit">总收益 {{result.profit}} · {{result.multiple}}</text>
+      </view>
+      <view class="hero-stats">
+        <view class="hero-stat">
+          <text class="stat-label">累计投入</text>
+          <text class="stat-value">{{result.invested}}</text>
+        </view>
+        <view class="hero-stat">
+          <text class="stat-label">累计分红</text>
+          <text class="stat-value">{{result.dividends}}</text>
+        </view>
+        <view class="hero-stat">
+          <text class="stat-label">年化收益 XIRR</text>
+          <text class="stat-value">{{result.xirr}}</text>
+        </view>
+        <view class="hero-stat">
+          <text class="stat-label">期末持股</text>
+          <text class="stat-value">{{result.shares}}</text>
+        </view>
+      </view>
+      <view class="hero-foot">
+        <text>{{result.footLeft}}</text>
+        <text>{{result.footRight}}</text>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="section-head">
+        <view>
+          <text class="section-kicker">PORTFOLIO VALUE</text>
+          <text class="section-title">资产增长曲线</text>
+        </view>
+        <view class="legend">
+          <view class="legend-item"><view class="legend-line asset"></view><text>总资产</text></view>
+          <view class="legend-item"><view class="legend-line invest"></view><text>累计投入</text></view>
+        </view>
+      </view>
+      <canvas type="2d" id="assetChart" class="chart-canvas"></canvas>
+      <view class="chart-note">✦ <text>{{insights.compoundText}}</text></view>
+    </view>
+
+    <view class="insights">
+      <view class="insight-card">
+        <text class="insight-label">I · 股息回收</text>
+        <text class="insight-value">{{insights.coverage}}</text>
+        <text class="insight-text">{{insights.coverageText}}</text>
+      </view>
+      <view class="insight-card">
+        <text class="insight-label">II · {{insights.compoundLabel}}</text>
+        <text class="insight-value">{{insights.compoundValue}}</text>
+        <text class="insight-text">{{insights.compoundText}}</text>
+      </view>
+      <view class="insight-card">
+        <text class="insight-label">III · 当前股息率</text>
+        <text class="insight-value">{{insights.yield}}</text>
+        <text class="insight-text">{{insights.yieldText}}</text>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="section-head">
+        <view>
+          <text class="section-kicker">DIVIDEND INCOME</text>
+          <text class="section-title">年度分红</text>
+        </view>
+        <text class="pill">税后 · {{currency}}</text>
+      </view>
+      <canvas type="2d" id="dividendChart" class="chart-canvas chart-canvas-sm"></canvas>
+      <text class="chart-note">柱状图为税后分红，点击下方年份可查看每一笔再投入。</text>
+    </view>
+
+    <view class="card yearly-card">
+      <view class="section-head">
+        <view>
+          <text class="section-kicker">YEAR BY YEAR</text>
+          <text class="section-title">逐年明细</text>
+        </view>
+        <text class="mini-label">{{yearCount}} 个年度</text>
+      </view>
+      <text class="table-hint">点击年份，展开当年每次分红、红利税与再投份额。</text>
+
+      <view wx:for="{{yearRows}}" wx:key="year" class="year-item {{item.latest ? 'latest' : ''}}">
+        <view class="year-top" data-year="{{item.year}}" bindtap="toggleYear">
+          <view class="year-name">
+            <text class="year-number">{{item.year}}{{item.partial ? '*' : ''}}</text>
+            <text wx:if="{{item.latest}}" class="year-tag">至今</text>
+            <text wx:if="{{item.count}}" class="count-tag">{{item.count}} 次</text>
+          </view>
+          <text class="year-action">{{item.expanded ? '收起' : '明细'}}</text>
+        </view>
+        <view class="year-grid">
+          <view class="year-metric">
+            <text class="m-label">年末资产</text>
+            <text class="m-value">{{item.endValue}}</text>
+          </view>
+          <view class="year-metric">
+            <text class="m-label">当年投入</text>
+            <text class="m-value">{{item.invested}}</text>
+          </view>
+          <view class="year-metric">
+            <text class="m-label">税后分红</text>
+            <text class="m-value">{{item.net}}</text>
+          </view>
+          <view class="year-metric">
+            <text class="m-label">再投份额</text>
+            <text class="m-value">{{item.reinvest}}</text>
+          </view>
+        </view>
+        <view class="year-foot">
+          <text>年末 {{item.shares}} · 累计收益 <text class="{{item.cumReturnClass}}">{{item.cumReturn}}</text></text>
+        </view>
+
+        <view wx:if="{{item.expanded}}" class="year-detail" catchtap="noop">
+          <view class="detail-head">
+            <text>税前分红 {{item.gross}} · 红利税 {{item.tax}}</text>
+            <text>税率按批次持有期加权</text>
+          </view>
+          <view wx:if="{{item.dividends.length}}">
+            <view wx:for="{{item.dividends}}" wx:for-item="d" wx:key="exDate" class="dividend-item">
+              <view class="dividend-top">
+                <text class="dividend-date">{{d.exDate}}</text>
+                <text class="dividend-net">税后 {{d.net}}</text>
+              </view>
+              <view class="dividend-detail">
+                <text>每股 {{d.perShare}}</text>
+                <text>税前 {{d.gross}}</text>
+                <text>税 {{d.tax}}（{{d.rate}}）</text>
+                <text>再投价 {{d.price}}</text>
+                <text>再投 {{d.shares}}</text>
+              </view>
+            </view>
+          </view>
+          <text wx:else class="muted detail-empty">本年没有分红记录。</text>
+          <view wx:if="{{item.shareEvents.length}}" class="share-events">
+            <text class="share-title">送转股</text>
+            <view wx:for="{{item.shareEvents}}" wx:for-item="s" wx:key="date" class="share-row">
+              <text>{{s.date}}</text>
+              <text>{{s.text}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+      <text class="table-foot">* 标注为不完整年度。金额单位：{{currency}}；累计收益 = 年末资产 − 累计投入。</text>
+    </view>
+
+    <view class="notes-card">
+      <text class="notes-title">计算说明</text>
+      <text class="note-line">· A 股使用东方财富不复权价、实际派息和送转；美股/港股使用 Yahoo 拆股复权数据。</text>
+      <text class="note-line">· 开始日必须是交易日；定投遇非交易日按“顺延/跳过”处理。</text>
+      <text class="note-line">· 分红按除息日收盘价再投资；A 股红利税按持有期估算，实际在卖出时结算。</text>
+      <text class="note-line">· 不计佣金、印花税、汇率与现金利息；历史测算不构成投资建议。</text>
+    </view>
+  </view>
+</view>

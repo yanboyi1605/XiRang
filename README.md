@@ -2,24 +2,27 @@
 
 > 把每一次分红，变成更多股份。
 
-一个面向长期收息投资者的**股息再投资历史回测计算器**。选择一只股票、一个历史交易日和投入方式，看看如果每次分红都继续买入，到今天账户里会有多少资产。
+一个面向长期收息投资者的**股息再投资历史回测计算器**：选择股票、历史交易日和投入方式，看看如果每次分红都继续买入，到今天账户里会有多少资产。
+
+同时提供 **Web 版** 和 **微信小程序版**。
 
 ![息壤界面预览](docs/preview.png)
 
 ## 功能
 
-- **自定义股票**：支持 A 股（`601398` → `.SS` / `.SZ`）、港股（`0700.HK`）、美股（`AAPL`），也可以输入 ETF、指数等 Yahoo Finance 支持的代码。
+- **中文搜索股票**：支持名称、拼音全拼、拼音首字母、代码和常用别名，例如 `工商`、`工行`、`gsyh`、`601398`、`腾讯`、`0700.HK`、`苹果`、`AAPL`。
+- **自定义股票**：A 股、港股、美股，也可以输入 ETF、指数等 Yahoo Finance 支持的代码。
 - **只在交易日买入**：开始日必须是真实交易日；选到周末/节假日会提示并给出“使用下一交易日”按钮，不会静默成交。
 - **月定投 / 年定投 / 一次性**：定投遇非交易日可选择**顺延到下一交易日**或**跳过本期**。
-- **分红再投资**：默认把每次税后分红按除息日收盘价自动买入；也可切换为现金分红，对比两种结果。
+- **分红再投资**：默认把每次税后分红按除息日收盘价自动买入；也可切换为现金分红做对比。
 - **A 股差别化红利税**：按每笔买入份额的持有期分档计税（≤1 个月 20%、1 个月–1 年 10%、>1 年 0%）；美/港股可设置固定预扣税率。
 - **送转股处理**：A 股 10 送/转 X 股按实际比例增加持股，并在逐年明细中列出。
 - **完整指标**：期末总资产、累计投入、税前/税后分红、红利税、总收益、XIRR、持股数、股息回收率、近 12 个月股息率。
 - **逐年分红明细**：点击年份展开当年每次分红的除息日、每股派息、税前/税后金额、实际税率、再投价格与新增份额。
-- **可视化**：资产增长曲线、年度分红柱状图、年度投入与持股双轴图、逐年明细表。
-- **可分享**：所有参数同步到 URL，点击“分享方案”即可复制当前测算链接。
+- **可视化**：Web 版使用 ECharts；小程序版使用原生 Canvas 2D 绘制资产曲线和年度分红柱状图。
+- **可分享**：Web 版参数同步 URL；小程序支持微信分享。
 
-## 快速开始
+## 快速开始（Web）
 
 要求 Node.js 20 及以上。
 
@@ -37,10 +40,70 @@ npm start
 $env:PORT=8080; npm start
 ```
 
-运行单元测试（18 个用例）：
+运行测试（22 个用例）：
 
 ```bash
 npm test
+```
+
+## 微信小程序
+
+小程序代码在 `miniprogram/`，使用原生 WXML/WXSS/JS，不依赖第三方组件库。
+
+### 1. 启动后端
+
+```powershell
+cd "D:\DeepSeek自建工具\dividend-compounder"
+npm start
+```
+
+### 2. 导入微信开发者工具
+
+- 打开微信开发者工具，选择“导入项目”。
+- 项目目录选择：
+  - 仓库根目录 `dividend-compounder`（已配置 `miniprogramRoot`），或
+  - `dividend-compounder/miniprogram`。
+- AppID 可先用测试号；正式发布前把 `project.config.json` 里的 `appid` 换成你的小程序 AppID。
+- 在“详情 → 本地设置”里勾选 **不校验合法域名、web-view（业务域名）、TLS 版本以及 HTTPS 证书**（仅本地开发）。
+
+### 3. API 地址
+
+编辑 `miniprogram/config.js`：
+
+```js
+module.exports = {
+  apiBase: 'http://127.0.0.1:3210',
+};
+```
+
+- 开发者工具模拟器可直接用 `127.0.0.1`。
+- **真机调试**：把 `apiBase` 改成电脑局域网 IP，例如 `http://192.168.1.20:3210`，并用 `HOST=0.0.0.0` 启动后端：
+
+```powershell
+$env:HOST='0.0.0.0'; npm start
+```
+
+- **正式发布**：后端必须部署到 HTTPS 域名，并在微信公众平台配置 `request` 合法域名；`apiBase` 改成该域名。
+
+### 4. 小程序功能
+
+- 首页：中文搜索入口、股票卡、日期选择、定投方式、金额、分红再投资、红利税、测算结果。
+- 搜索页：中文名/拼音/首字母/代码搜索，A股/港股/美股筛选，热门股票。
+- 结果页：期末资产、累计投入/分红、XIRR、资产曲线、年度分红柱状图、逐年分红再投资明细。
+
+## 股票搜索
+
+搜索索引由 `scripts/build-stock-index.js` 生成到 `data/stock-index.json`：
+
+- A 股：东方财富股票列表，约 5,600 只，含中文名、拼音全拼、拼音首字母、交易所。
+- 港股/美股：内置常用中文名称与别名（腾讯、阿里、美团、苹果、微软、英伟达、可口可乐等）。
+- 搜索接口：`GET /api/search?q=工商&market=CN&limit=20`。
+- 热门接口：`GET /api/hot`。
+
+重新生成索引（需要 `pinyin-pro`，已列入 devDependencies）：
+
+```bash
+npm run index
 ```
 
 ## 数据来源与口径
@@ -50,12 +113,13 @@ npm test
 - 价格：**东方财富不复权日线收盘价**。
 - 分红：东方财富 `RPT_SHAREBONUS_DET` 中的实际每股派息（`10 派 X 元` → `X / 10`）。
 - 送转：按 `BONUS_IT_RATIO + BONUS_RATIO` 计算股数倍数；分红先按送转前持股计算，再做送转。
-- 若东方财富不可用，会回退到 Yahoo Finance，并在页面标记“备用数据”；此时送转股口径可能不准确。
+- 若东方财富不可用，会回退到 Yahoo Finance，并在页面标记“备用数据”。
 
 ### 美股 / 港股
 
 - 价格与分红来自 **Yahoo Finance**，使用拆股复权价和拆股调整后的每股分红。
 - 持股数为拆股调整后的当前口径。
+- 常用港股/美股会使用搜索索引中的中文名称展示。
 
 ### 示例数据
 
@@ -94,19 +158,47 @@ npm run seed -- 601398.SS 600519.SS
 
 ```
 dividend-compounder/
-├─ server.js               # 零依赖 Node HTTP 服务 + API + 静态文件
-├─ lib/data.js             # 东方财富 / Yahoo 抓取、代码规范化、缓存、种子回退
-├─ public/
+├─ server.js                    # 零依赖 Node HTTP 服务 + API + 静态文件
+├─ lib/
+│  ├─ data.js                   # 东方财富 / Yahoo 抓取、缓存、种子回退
+│  └─ search.js                 # 中文 / 拼音 / 代码搜索
+├─ public/                      # Web 版
 │  ├─ index.html
 │  ├─ css/style.css
-│  ├─ js/app.js            # 交互、渲染、ECharts
-│  ├─ js/simulate.js       # 纯函数模拟引擎（浏览器 / Node 共用）
+│  ├─ js/app.js                 # 交互、搜索、ECharts
+│  ├─ js/simulate.js            # 纯函数模拟引擎（ESM）
 │  └─ vendor/echarts.min.js
-├─ scripts/fetch-seed.js   # 重新抓取内置示例数据
-├─ data/seed/              # 7 只示例股票历史数据
-├─ test/simulate.test.js   # 18 个单元测试
-└─ docs/preview.png
+├─ miniprogram/                 # 微信小程序
+│  ├─ app.js / app.json / app.wxss
+│  ├─ config.js                 # API 地址
+│  ├─ utils/
+│  │  ├─ api.js
+│  │  ├─ format.js
+│  │  └─ simulate.js            # 由 public/js/simulate.js 生成（CommonJS）
+│  └─ pages/
+│     ├─ index/                 # 测算首页
+│     └─ search/                # 中文搜索
+├─ scripts/
+│  ├─ fetch-seed.js             # 抓取示例数据
+│  ├─ build-stock-index.js      # 生成中文搜索索引
+│  └─ build-miniprogram-engine.js
+├─ data/
+│  ├─ seed/                     # 7 只示例股票历史数据
+│  └─ stock-index.json          # 5,600+ 股票搜索索引
+├─ test/                        # 22 个单元测试
+├─ docs/preview.png
+└─ project.config.json          # 微信开发者工具项目配置（根目录导入用）
 ```
+
+## 修改小程序引擎
+
+小程序不能直接加载 Web 的 ESM 引擎，因此由脚本生成 CommonJS 版本：
+
+```bash
+npm run mp:engine
+```
+
+源文件是 `public/js/simulate.js`，生成目标是 `miniprogram/utils/simulate.js`。
 
 ## 已知限制
 
@@ -114,6 +206,7 @@ dividend-compounder/
 - A 股红利税按分红时持有期估算，实际在卖出时结算；长期持有到卖出时可能免税。
 - 送股/转增本身未单独计税；配股、增发、缩股等未建模。
 - 数据源可能限流或调整字段；A 股优先东方财富，失败时回退 Yahoo 并标记。
+- 小程序正式上线需要 HTTPS 域名、已备案后端和微信后台合法域名配置。
 - 历史回测不代表未来收益，本工具不构成投资建议。
 
 ## License

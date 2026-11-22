@@ -404,8 +404,95 @@ input[type="date"] {
 
 .symbol-input {
   flex: 1;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.symbol-field {
+  position: relative;
+}
+
+.search-results {
+  max-height: 232px;
+  margin-top: 6px;
+  overflow-y: auto;
+  background: var(--card-solid);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 14px 28px -20px rgba(18, 59, 44, 0.45);
+}
+
+.search-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+}
+
+.search-result:last-child {
+  border-bottom: 0;
+}
+
+.search-result:hover {
+  background: rgba(181, 143, 82, 0.08);
+}
+
+.search-result .sr-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  color: #f8f1e4;
+  font-family: var(--serif);
+  font-size: 12px;
+  background: var(--forest);
+  border-radius: 6px;
+}
+
+.search-result .sr-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.search-result .sr-name {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.search-result .sr-code {
+  color: var(--muted);
+  font-family: var(--num);
+  font-size: 8.5px;
+  letter-spacing: 0.03em;
+}
+
+.search-result .sr-market {
+  flex: 0 0 auto;
+  padding: 2px 5px;
+  color: var(--gold);
+  font-size: 8px;
+  border: 1px solid rgba(181, 143, 82, 0.25);
+  border-radius: 3px;
+}
+
+.search-empty {
+  padding: 10px;
+  color: var(--muted);
+  font-size: 9.5px;
+  line-height: 1.6;
 }
 
 .load-btn {

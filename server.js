@@ -4,6 +4,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { loadStock, sliceForRange, PRESETS, warmup } from './lib/data.js';
+import { searchStocks, getHotStocks } from './lib/search.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(ROOT, 'public');
@@ -88,6 +89,29 @@ const server = http.createServer(async (req, res) => {
 
   if (url.pathname === '/api/presets') {
     return sendJson(res, 200, { ok: true, presets: PRESETS });
+  }
+
+  if (url.pathname === '/api/search') {
+    const q = url.searchParams.get('q') || '';
+    const market = (url.searchParams.get('market') || 'ALL').toUpperCase();
+    const limit = Math.min(30, Math.max(1, Number(url.searchParams.get('limit')) || 20));
+    try {
+      const results = await searchStocks(q, {
+        market: ['CN', 'HK', 'US'].includes(market) ? market : 'ALL',
+        limit,
+      });
+      return sendJson(res, 200, { ok: true, query: q, results });
+    } catch (err) {
+      return sendJson(res, 500, { ok: false, error: err.message });
+    }
+  }
+
+  if (url.pathname === '/api/hot') {
+    try {
+      return sendJson(res, 200, { ok: true, results: await getHotStocks() });
+    } catch (err) {
+      return sendJson(res, 500, { ok: false, error: err.message });
+    }
   }
 
   if (url.pathname === '/api/stock') {

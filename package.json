@@ -7,6 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "seed": "node scripts/fetch-seed.js",
+    "index": "node scripts/build-stock-index.js",
+    "mp:engine": "node scripts/build-miniprogram-engine.js",
     "test": "node --test"
   },
   "engines": {
@@ -14,5 +16,8 @@
   },
   "dependencies": {
     "echarts": "^5.6.0"
+  },
+  "devDependencies": {
+    "pinyin-pro": "^3.29.5"
   }
 }
