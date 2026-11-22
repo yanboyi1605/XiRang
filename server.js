@@ -149,7 +149,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`息壤 · 股息复利计算器  →  http://${HOST}:${PORT}`);
+  console.log(`息壤 · 股票分红计算器  →  http://${HOST}:${PORT}`);
   warmup().catch(() => {});
 });
 

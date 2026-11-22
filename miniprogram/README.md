@@ -1,6 +1,8 @@
-# 息壤 · 微信小程序
+# 息壤 · 股票分红计算器（微信小程序）
 
 原生 WXML / WXSS / JS 版本，复用同一套 Node 后端与模拟引擎。
+
+发布流程与所需材料见 [docs/publish-checklist.md](../docs/publish-checklist.md)。
 
 ## 开发
 

@@ -935,3 +935,18 @@
   font-size: 17rpx;
   line-height: 1.8;
 }
+
+.about-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 10rpx 8rpx;
+  color: #8a6a3f;
+  font-size: 23rpx;
+  letter-spacing: 1rpx;
+}
+
+.about-arrow {
+  color: #b58f52;
+  font-size: 28rpx;
+}

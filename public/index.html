@@ -3,11 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>息壤 · 股息再投资计算器</title>
+    <title>息壤 · 股票分红计算器｜历史分红再投资回测</title>
     <meta
       name="description"
-      content="选择一只股票，设定历史买入时间与定投计划，把每一次分红都变成新的股份，看看时间与复利如何工作。"
+      content="息壤股票分红计算器：输入股票名称或代码，选择历史买入日期、一次性或每月/每年定投，自动把分红再投入，测算到今天账户总资产、累计分红和年化收益。支持 A 股、港股、美股。"
     />
+    <meta name="keywords" content="股票分红计算器,股息复利,分红再投资,定投回测,股票收益计算,息壤" />
     <meta name="theme-color" content="#f4efe4" />
     <link
       rel="icon"
@@ -23,11 +24,11 @@
         <span class="seal">息</span>
         <span class="brand-text">
           <strong>息壤</strong>
-          <small>DIVIDEND COMPOUNDER</small>
+          <small>STOCK DIVIDEND CALCULATOR</small>
         </span>
       </a>
       <div class="header-right">
-        <p class="header-tagline">把每一次分红，变成更多股份。</p>
+        <p class="header-tagline">股票分红计算器 · 把每一次分红，变成更多股份。</p>
         <button class="ghost-btn" id="shareBtn" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M15 8a3 3 0 1 0-2.9-3.7L7.8 7.1a3 3 0 1 0 0 5.8l4.3 2.8A3 3 0 1 0 13 14l-4.3-2.8a3 3 0 0 0 0-2.4L13 6a3 3 0 0 0 2 2Z" />
@@ -240,7 +241,7 @@
       <section class="content" aria-label="测算结果">
         <div class="result-top">
           <div class="stock-title">
-            <p class="kicker">HISTORICAL DIVIDEND BACKTEST</p>
+            <p class="kicker">STOCK DIVIDEND CALCULATOR</p>
             <h1>
               <span id="stockName">工商银行</span>
               <span class="ticker" id="stockTicker">601398.SS</span>

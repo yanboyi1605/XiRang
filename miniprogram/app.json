@@ -1,12 +1,13 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/search/search"
+    "pages/search/search",
+    "pages/about/about"
   ],
   "window": {
     "navigationBarBackgroundColor": "#f4efe4",
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "息壤",
+    "navigationBarTitleText": "息壤 · 股票分红计算器",
     "backgroundColor": "#f4efe4",
     "backgroundTextStyle": "dark"
   },

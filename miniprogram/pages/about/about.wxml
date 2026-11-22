@@ -1,0 +1,51 @@
+<view class="page about-page">
+  <view class="about-hero">
+    <view class="about-mark">息</view>
+    <view class="about-brand">
+      <text class="about-title">息壤 · 股票分红计算器</text>
+      <text class="about-sub">STOCK DIVIDEND CALCULATOR</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <text class="about-kicker">WHAT IT DOES</text>
+    <text class="about-heading">这个工具做什么</text>
+    <text class="about-p">输入一只股票、历史买入日期和投入金额，计算器会把持有期间收到的现金分红，按除息日收盘价继续买入同一只股票，估算到今天为止的持股数量、账户总资产、累计分红和年化收益（XIRR）。</text>
+    <text class="about-p">支持一次性买入、每月定投、每年定投；支持 A 股、港股和美股。A 股会处理送转股和按持有期估算的红利税，港股/美股按拆股复权数据处理。</text>
+  </view>
+
+  <view class="card">
+    <text class="about-kicker">DATA / METHOD</text>
+    <text class="about-heading">数据与口径</text>
+    <view class="about-row"><text class="about-dot">·</text><text class="about-p">A 股：东方财富不复权价格、实际每股派息、送转股事件。</text></view>
+    <view class="about-row"><text class="about-dot">·</text><text class="about-p">港股/美股：Yahoo Finance 历史价格与分红，按拆股复权。</text></view>
+    <view class="about-row"><text class="about-dot">·</text><text class="about-p">分红按除息日收盘价再投资；不计佣金、印花税、汇率和现金利息。</text></view>
+    <view class="about-row"><text class="about-dot">·</text><text class="about-p">A 股红利税按每笔股份的持有期加权估算：≤1 个月 20%，1 个月–1 年 10%，超过 1 年 0%；实际税额在卖出时由券商结算。</text></view>
+    <view class="about-row"><text class="about-dot">·</text><text class="about-p">历史数据可能延迟、缺失或有误，分红与送转以公司公告为准。</text></view>
+    <text class="about-note">本工具与东方财富、Yahoo Finance 无隶属或背书关系，数据仅用于个人学习与历史回测。</text>
+  </view>
+
+  <view class="card">
+    <text class="about-kicker">PRIVACY</text>
+    <text class="about-heading">隐私说明</text>
+    <view class="about-row"><text class="about-dot">·</text><text class="about-p">不需要微信登录，不读取你的昵称、头像、手机号、位置或通讯录。</text></view>
+    <view class="about-row"><text class="about-dot">·</text><text class="about-p">你输入的股票代码、日期和金额会发送到计算服务，仅用于本次测算，不写入用户数据库。</text></view>
+    <view class="about-row"><text class="about-dot">·</text><text class="about-p">输入会缓存在微信本地，方便下次打开；删除小程序或清除缓存即可移除。</text></view>
+    <view class="about-row"><text class="about-dot">·</text><text class="about-p">服务器可能保留必要的访问日志（IP、时间、接口）用于安全和故障排查，不用于用户画像。</text></view>
+  </view>
+
+  <view class="card disclaimer-card">
+    <text class="about-kicker">DISCLAIMER</text>
+    <text class="about-heading">免责声明</text>
+    <text class="about-p">本工具提供的是基于公开历史数据的情景测算，不是投资建议、收益承诺或买卖要约，也不构成任何形式的证券投资咨询。</text>
+    <text class="about-p">历史回测结果不代表未来表现。分红政策、股价、税率、汇率和交易成本都会变化，实际收益可能与测算结果存在明显差异。</text>
+    <text class="about-p">请独立思考并自行承担投资决策的责任。因使用本工具产生的任何直接或间接损失，开发者不承担责任。</text>
+    <text class="about-warn">股市有风险，投资需谨慎。</text>
+  </view>
+
+  <view class="about-foot">
+    <text>版本 {{version}} · 更新于 {{updated}}</text>
+    <text>数据纠错或建议：请通过小程序右上角 ··· → 反馈与投诉 提交。</text>
+    <text class="about-copy">息壤 · 把每一次分红，变成更多股份。</text>
+  </view>
+</view>

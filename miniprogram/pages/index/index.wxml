@@ -4,10 +4,10 @@
       <view class="seal">息</view>
       <view class="brand-copy">
         <text class="brand-name">息壤</text>
-        <text class="brand-sub">DIVIDEND COMPOUNDER</text>
+        <text class="brand-sub">STOCK DIVIDEND CALCULATOR</text>
       </view>
     </view>
-    <text class="brand-tagline">把每一次分红，变成更多股份。</text>
+    <text class="brand-tagline">股票分红计算器 · 分红再投资回测</text>
   </view>
 
   <view class="card setup-card">
@@ -298,6 +298,11 @@
       <text class="note-line">· 开始日必须是交易日；定投遇非交易日按“顺延/跳过”处理。</text>
       <text class="note-line">· 分红按除息日收盘价再投资；A 股红利税按持有期估算，实际在卖出时结算。</text>
       <text class="note-line">· 不计佣金、印花税、汇率与现金利息；历史测算不构成投资建议。</text>
+    </view>
+
+    <view class="about-link" bindtap="openAbout">
+      <text>关于 · 数据来源 · 隐私与免责声明</text>
+      <text class="about-arrow">→</text>
     </view>
   </view>
 </view>

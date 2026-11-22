@@ -89,9 +89,13 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: `${this.data.stockName} · 股息复利测算`,
+      title: `${this.data.stockName} · 股票分红计算器`,
       path: `/pages/index/index?symbol=${this.data.stockSymbol}`,
     };
+  },
+
+  openAbout() {
+    wx.navigateTo({ url: '/pages/about/about' });
   },
 
   loadStock(symbol) {

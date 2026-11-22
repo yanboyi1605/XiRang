@@ -2,13 +2,14 @@
   "name": "dividend-compounder",
   "version": "1.0.0",
   "private": true,
-  "description": "息壤 · 股票股息再投资复利计算器",
+  "description": "息壤 · 股票分红计算器：分红再投资复利回测",
   "type": "module",
   "scripts": {
     "start": "node server.js",
     "seed": "node scripts/fetch-seed.js",
     "index": "node scripts/build-stock-index.js",
     "mp:engine": "node scripts/build-miniprogram-engine.js",
+    "mp:upload": "node scripts/upload-miniprogram.cjs",
     "test": "node --test"
   },
   "engines": {
