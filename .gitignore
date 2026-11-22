@@ -1,6 +1,7 @@
 node_modules/
 data/cache/*.json
 !data/cache/.gitkeep
+project.private.config.json
 *.log
 shot-*.png
 .DS_Store

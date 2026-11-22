@@ -108,7 +108,7 @@
           <switch checked="{{holdingTax}}" color="#123B2C" bindchange="onHoldingTax" />
           <view class="check-copy">
             <text class="switch-title">按 A 股持有期差别计税</text>
-            <text class="switch-sub">≤1月 20% · 1月–1年 10% · &gt;1年 0%</text>
+            <text class="switch-sub">≤1月 20% · 1月–1年 10% · 超过1年 0%</text>
           </view>
         </view>
         <view wx:if="{{!holdingTax}}" class="tax-row">

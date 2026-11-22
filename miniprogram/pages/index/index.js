@@ -442,10 +442,13 @@ Page({
             price: d.reinvested ? fmt.fmtNum(d.price, 2) : '—',
             shares: d.reinvested ? fmt.fmtNum(d.sharesBought, 2) : '现金',
           })),
-          shareEvents: events.map((ev) => ({
-            date: fmt.fmtDateDot(ev.date),
-            text: `每 10 股送转 ${fmt.fmtNum((ev.ratio - 1) * 10, 2)} 股 · 新增 ${fmt.fmtNum(ev.added, 2)} 股`,
-          })),
+          shareEvents: events.map((ev) => {
+            const per10 = Number(((ev.ratio - 1) * 10).toFixed(2));
+            return {
+              date: fmt.fmtDateDot(ev.date),
+              text: `每 10 股送转 ${fmt.fmtNum(per10, per10 % 1 === 0 ? 0 : 2)} 股 · 新增 ${fmt.fmtNum(ev.added, 2)} 股`,
+            };
+          }),
         };
       });
 
@@ -520,9 +523,9 @@ Page({
       ctx.font = '10px sans-serif';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'right';
-      for (let i = 0; i <= 4; i++) {
-        const y = pad.top + (plotH * i) / 4;
-        const value = niceMax - (niceMax * i) / 4;
+      for (let i = 0; i <= 5; i++) {
+        const y = pad.top + (plotH * i) / 5;
+        const value = niceMax - (niceMax * i) / 5;
         ctx.strokeStyle = 'rgba(23,37,31,.07)';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -614,8 +617,8 @@ Page({
       ctx.font = '10px sans-serif';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'right';
-      for (let i = 0; i <= 3; i++) {
-        const y = pad.top + (plotH * i) / 3;
+      for (let i = 0; i <= 5; i++) {
+        const y = pad.top + (plotH * i) / 5;
         ctx.strokeStyle = 'rgba(23,37,31,.07)';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -623,7 +626,7 @@ Page({
         ctx.lineTo(pad.left + plotW, y);
         ctx.stroke();
         ctx.fillStyle = '#8a938c';
-        ctx.fillText(fmt.fmtCompact(maxV - (maxV * i) / 3), pad.left - 6, y);
+        ctx.fillText(fmt.fmtCompact(maxV - (maxV * i) / 5), pad.left - 6, y);
       }
 
       const slot = plotW / rows.length;
@@ -662,7 +665,7 @@ Page({
       ctx.fillStyle = '#8a938c';
       const step = Math.max(1, Math.ceil(rows.length / 6));
       rows.forEach((row, i) => {
-        if (i % step !== 0 && i !== rows.length - 1) return;
+        if (i % step !== 0) return;
         const x = pad.left + slot * i + slot / 2;
         ctx.fillText(String(row.year), x, pad.top + plotH + 7);
       });

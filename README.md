@@ -50,6 +50,10 @@ npm test
 
 小程序代码在 `miniprogram/`，使用原生 WXML/WXSS/JS，不依赖第三方组件库。
 
+![小程序搜索](docs/miniprogram-search.png)
+
+![小程序资产曲线](docs/miniprogram-chart.png)
+
 ### 1. 启动后端
 
 ```powershell
@@ -63,7 +67,7 @@ npm start
 - 项目目录选择：
   - 仓库根目录 `dividend-compounder`（已配置 `miniprogramRoot`），或
   - `dividend-compounder/miniprogram`。
-- AppID 可先用测试号；正式发布前把 `project.config.json` 里的 `appid` 换成你的小程序 AppID。
+- AppID 已配置为测试号；正式发布前把 `project.config.json` 和 `miniprogram/project.config.json` 里的 `appid` 换成你的小程序 AppID。
 - 在“详情 → 本地设置”里勾选 **不校验合法域名、web-view（业务域名）、TLS 版本以及 HTTPS 证书**（仅本地开发）。
 
 ### 3. API 地址
